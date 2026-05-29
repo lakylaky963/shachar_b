@@ -27,7 +27,7 @@ mongoose.connect(MONGO_URI)
   adi: Number     
 });
 
-app.post('/api/flight-data', async (req, res) => {
+app.post('/api/FlightData', async (req, res) => {
   try {
     const newData = new FlightData(req.body);
     await newData.save();
@@ -37,7 +37,7 @@ app.post('/api/flight-data', async (req, res) => {
   }
 });
 
-app.get('/api/flight-data', async (req, res) => {
+app.get('/api/FlightData', async (req, res) => {
   const data = await FlightData.find().sort({_id: -1}).limit(1);
   res.json(data[0]);
 });
