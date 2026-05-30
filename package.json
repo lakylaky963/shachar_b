@@ -1,0 +1,13 @@
+{
+  "name": "flight-monitor-app",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "npm --prefix server start",
+    "client": "npm --prefix flight-monitor-client start",
+    "install-all": "npm install && npm --prefix server install && npm --prefix flight-monitor-client install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

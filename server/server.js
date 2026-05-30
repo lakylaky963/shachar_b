@@ -1,49 +1,26 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const FlightData = require('./models/FlightData');
+const express = require('express'); //  מייבא את ספריית Express, המשמשת כבסיס לבניית השרת, ניהול נתיבים (Routes) ופונקציות ביניים (Middleware).
+const cors = require('cors');  //מייבא את ספריית CORS, שמאפשרת לשרת לקבל בקשות מדפדפנים וכתובות חיצוניות (למשל, מאפליקציית הפרונטאנד).
+const connectDB = require('./config/db'); // מייבא את הפונקציה שאחראית על חיבור השרת לבסיס הנתונים (מתוך קובץ הגדרות פנימי).
+const flightRoutes = require('./routes/flightRoutes'); //מייבא את קובץ הנתונים והנתיבים שקשורים לטיסות (כמו הצגת טיסות, הוספה או מחיקה).
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+require('dotenv').config(); // טוען את משתני הסביבה מקובץ .env, שמאפשר להגדיר פרמטרים כמו כתובת בסיס הנתונים או פורט השרת בצורה נוחה ובטוחה.
 
-const PORT = 5000;
-const MONGO_URI = 'mongodb://localhost:27017/flightMonitor';
+const app = express();// יוצר מופע של אפליקציית Express, שמייצג את השרת שלנו ודרכו נגדיר את הנתיבים והפונקציות השונות.
+app.use(cors());// מוסיף את פונקציית ה-CORS כאמצעי ביניים (Middleware) לכל הבקשות שמגיעות לשרת, מה שמאפשר גישה חופשית מהדפדפן או מכתובות חיצוניות.
+app.use(express.json());// מוסיף את פונקציית ה-JSON של Express כאמצעי ביניים, שמאפשר לשרת לפרש את גוף הבקשות בפורמט JSON, מה שחשוב במיוחד כשמדובר בנתונים שנשלחים מהפרונטאנד (כמו נתוני טיסה).
 
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-    app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
+const PORT = process.env.PORT || 5000;// מגדיר את הפורט שעליו השרת יאזין. אם יש משתנה סביבה בשם PORT, הוא ישמש, אחרת השרת יאזין על פורט 5000 כברירת מחדל.
+
+connectDB().then(() => {// מנסה להתחבר לבסיס הנתונים באמצעות הפונקציה connectDB. אם החיבור מצליח, השרת יתחיל להאזין לבקשות. אם יש שגיאה בחיבור, היא תתפס ותודפס בקונסול.
+  app.listen(PORT, () => {// השרת מתחיל להאזין לבקשות על הפורט שהוגדר, ומדפיס הודעה לקונסול שמאשרת שהשרת פועל וניתן לגשת אליו דרך הכתובת http://localhost:PORT.
+    console.log(`Server is running on http://localhost:${PORT}`);// הודעה שמודפסת לקונסול כאשר השרת מתחיל לפעול, מציינת את הכתובת והפורט שעליהם השרת מאזין.
   });
-
-  const FlightSchema = new mongoose.Schema({
-  altitude: Number, 
-  his: Number,     
-  adi: Number     
+}).catch((err) => {// אם יש שגיאה במהלך ניסיון החיבור לבסיס הנתונים, היא תיתפס כאן ותודפס הודעת שגיאה לקונסול.
+  console.error("Failed to start server:", err); // הודעת שגיאה שמודפסת לקונסול אם השרת לא מצליח להתחבר לבסיס הנתונים, מציינת את הסיבה לכישלון.
 });
 
-app.post('/api/FlightData', async (req, res) => {
-  try {
-    const newData = new FlightData(req.body);
-    await newData.save();
-    res.status(201).send('Data saved successfully');
-  } catch (error) {
-    res.status(500).send('Error saving data');
-  }
-});
+app.use('/', flightRoutes); // מגדיר את הנתיב הראשי ('/') שבו השרת יטפל בבקשות הקשורות לטיסות, ומפנה אותן לנתיבים שהוגדרו בקובץ flightRoutes.js. זה מאפשר לארגן את הקוד בצורה מודולרית ונקייה יותר, כאשר כל הפונקציות והנתיבים הקשורים לטיסות נמצאים בקובץ נפרד.
 
-app.get('/api/FlightData', async (req, res) => {
-  const data = await FlightData.find().sort({_id: -1}).limit(1);
-  res.json(data[0]);
-});
-
-app.listen(PORT, () => console.log('Server running on port ' + PORT));
-
-app.get("/", (req, res) => {
-  res.send("Node.js server is working");
+app.get("/", (req, res) => { // מגדיר נתיב GET לכתובת השורש ('/'), כך שכאשר מישהו יגש לכתובת http://localhost:PORT/, השרת יענה עם הודעה פשוטה שמאשרת שהשרת פועל.
+  res.send("Node.js server is working"); // שולח תגובה עם הטקסט "Node.js server is working" לכל בקשה שמגיעה לכתובת השורש, מה שיכול לשמש לבדיקה בסיסית שהשרת פועל כראוי.
 });

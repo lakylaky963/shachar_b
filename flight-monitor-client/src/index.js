@@ -1,17 +1,11 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from 'react'; // מייבא את ספריית React, שהיא הספרייה המרכזית לפיתוח ממשקי משתמש ב-JavaScript. React מאפשרת לנו ליצור רכיבים (Components) שמייצגים חלקים שונים של הממשק, ולנהל את מצב האפליקציה בצורה יעילה באמצעות hooks כמו useState ו-useEffect.
+import ReactDOM from 'react-dom/client'; // מייבא את ReactDOM, שהיא ספרייה שמאפשרת לנו להציג את רכיבי ה-React בדפדפן. בגרסאות החדשות של React, משתמשים ב-ReactDOM.createRoot כדי ליצור שורש (root) שבו נוכל להציג את האפליקציה שלנו.
+import './index.css'; // מייבא את קובץ ה-CSS שמכיל את העיצובים והסגנונות של האפליקציה. קובץ זה יכול לכלול כללים לעיצוב הרכיבים, צבעים, גופנים, פריסות ועוד, כדי לשפר את המראה והחוויה של המשתמש באפליקציה שלנו.
+import App from './App'; // מייבא את הרכיב הראשי של האפליקציה, שנמצא בקובץ App.js. רכיב זה מכיל את הלוגיקה והמבנה המרכזיים של האפליקציה שלנו, והוא זה שמוצג למשתמש כאשר הוא פותח את האפליקציה בדפדפן. בתוך App.js, אנחנו מגדירים את הממשק, את הטיפול בנתונים, ואת האינטראקציות עם המשתמש.
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
+const root = ReactDOM.createRoot(document.getElementById('root')); // יוצר שורש (root) של ReactDOM על ידי קריאה ל-ReactDOM.createRoot ומעביר לו את האלמנט מה-DOM עם ה-id 'root'. זה אומר שהאפליקציה שלנו תוצג בתוך האלמנט הזה בדף ה-HTML. בדרך כלל, ב-index.html יש אלמנט כמו <div id="root"></div>, וזה המקום שבו האפליקציה שלנו תוטען ותוצג למשתמש.
+root.render( // מציג את האפליקציה שלנו על המסך על ידי קריאה ל-root.render ומעביר לו את הרכיב App בתוך תגית React.StrictMode. React.StrictMode הוא כלי שמסייע לנו לזהות בעיות פוטנציאליות בקוד שלנו במהלך הפיתוח, כמו שימוש בפונקציות מיושנות או בעיות בניהול מצב. הוא לא משפיע על הביצועים או ההתנהגות של האפליקציה בסביבת הייצור (production), אבל הוא עוזר לנו לכתוב קוד נקי ותקין יותר במהלך הפיתוח.
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

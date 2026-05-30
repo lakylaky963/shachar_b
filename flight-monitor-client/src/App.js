@@ -1,48 +1,220 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; // מייבא את ספריית React ואת ה-hook useState מתוך הספרייה. React מאפשרת לנו ליצור רכיבים (Components) שמייצגים חלקים שונים של הממשק, ולנהל את מצב האפליקציה בצורה יעילה באמצעות hooks כמו useState ו-useEffect. ה-hook useState מאפשר לנו להוסיף מצב (state) לרכיב פונקציונלי, כך שנוכל לעקוב אחרי ערכים שמשתנים במהלך חיי הרכיב ולהפעיל רינדור מחדש כאשר הערכים האלה משתנים.
+import './App.css'; // מייבא את קובץ ה-CSS שמכיל את העיצובים והסגנונות של הרכיב App. קובץ זה יכול לכלול כללים לעיצוב הרכיבים, צבעים, גופנים, פריסות ועוד, כדי לשפר את המראה והחוויה של המשתמש כאשר הוא משתמש ברכיב App. על ידי ייבוא הקובץ הזה, כל הסגנונות המוגדרים בו יהיו זמינים לרכיב App ולכל רכיב אחר שנמצא תחתיו במבנה ההיררכי של הרכיבים.
 
-function App() {
-  const [data, setData] = useState({ altitude: 0, his: 0, adi: 0 });
-  const [viewMode, setViewMode] = useState('text'); 
+function App() { // הגדרת הרכיב הראשי של האפליקציה בשם App. זהו רכיב פונקציונלי שמחזיר JSX, שהוא הסינטקס של React שמאפשר לנו לכתוב מבנה HTML בתוך JavaScript. בתוך הפונקציה הזו, אנחנו מגדירים את הלוגיקה והמבנה המרכזיים של האפליקציה שלנו, כולל ניהול מצב, טיפול באירועים, והצגת הממשק למשתמש.
+  const [data, setData] = useState({ altitude: '', his: '', adi: '' });
+  const [viewMode, setViewMode] = useState('text');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
 
-  const sendData = async () => {
-    await fetch('http://localhost:5000/api/flightdata', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    alert('Data Sent!');
+  const altitudeNumber = parseFloat(data.altitude) || 0; // מנסה להמיר את הערך של data.altitude למספר עשרוני באמצעות parseFloat. אם הערך לא ניתן להמרה (למשל, אם הוא ריק או מכיל תווים שאינם מספריים), אז parseFloat יחזיר NaN, והביטוי כולו יחזיר 0 בגלל השימוש באופרטור ||. זה מבטיח ש-altitudeNumber יהיה תמיד מספר תקין, גם אם המשתמש לא הזין ערך או הזין ערך לא חוקי.
+  const hisNumber = parseFloat(data.his) || 0; // מנסה להמיר את הערך של data.his למספר עשרוני באמצעות parseFloat. אם הערך לא ניתן להמרה (למשל, אם הוא ריק או מכיל תווים שאינם מספריים), אז parseFloat יחזיר NaN, והביטוי כולו יחזיר 0 בגלל השימוש באופרטור ||. זה מבטיח ש-hisNumber יהיה תמיד מספר תקין, גם אם המשתמש לא הזין ערך או הזין ערך לא חוקי.
+  const adiNumber = parseFloat(data.adi) || 0; // מנסה להמיר את הערך של data.adi למספר עשרוני באמצעות parseFloat. אם הערך לא ניתן להמרה (למשל, אם הוא ריק או מכיל תווים שאינם מספריים), אז parseFloat יחזיר NaN, והביטוי כולו יחזיר 0 בגלל השימוש באופרטור ||. זה מבטיח ש-adiNumber יהיה תמיד מספר תקין, גם אם המשתמש לא הזין ערך או הזין ערך לא חוקי.
+
+  const altitudePercent = Math.min((altitudeNumber / 3000) * 100, 100); // מחשב את האחוז של הגובה (altitude) מתוך 3000 על ידי חלוקת altitudeNumber ב-3000 והכפלת התוצאה ב-100. לאחר מכן, הוא משתמש בפונקציה Math.min כדי לוודא שהתוצאה לא תעלה על 100, כך שאם altitudeNumber גדול מ-3000, altitudePercent יהיה 100 ולא יותר. זה מאפשר לנו להציג את הגובה באחוזים בצורה נכונה גם כאשר הערך גבוה מהטווח המוגדר.
+  const adiMove = Math.max(Math.min(adiNumber, 100), -100) / 2; // מחשב את התזוזה של ה-ADI על ידי הגבלת adiNumber לטווח בין -100 ל-100 באמצעות שימוש משולב ב-Math.min ו-Math.max, ואז מחלק את התוצאה ב-2 כדי לקבל את התזוזה הסופית. זה מבטיח ש-adiMove יהיה תמיד בטווח של -50 עד 50, מה שמתאים להצגה ויזואלית של ה-ADI בממשק המשתמש.
+
+  const handleInputChange = (field, value) => { // פונקציה שמטפלת בשינויי הקלט של המשתמש. היא מקבלת את שם השדה (field) והערך החדש (value) שהמשתמש הזין, ואז מעדכנת את מצב הנתונים (data) על ידי יצירת אובייקט חדש שמכיל את כל הערכים הקודמים של data יחד עם הערך החדש עבור השדה המתאים. זה מאפשר לנו לעקוב אחרי השינויים שהמשתמש עושה בשדות הקלט ולשמור אותם במצב של הרכיב.
+    setData({ ...data, [field]: value }); // יוצר אובייקט חדש שמכיל את כל הערכים הקודמים של data באמצעות הפיזור (...data), ומעדכן את הערך של השדה המתאים (field) עם הערך החדש (value) שהמשתמש הזין. זה מאפשר לנו לשמור את כל הנתונים הקודמים ולהוסיף או לעדכן רק את השדה שהשתנה, מבלי לאבד את שאר הנתונים.
   };
 
-  return (
-    <div style={{ textAlign: 'center', padding: '20px' }}>
-      <h1>מוניטור מכווני טיסה</h1>
-      
-      <button onClick={() => setViewMode('text')}>TEXT</button>
-      <button onClick={() => setViewMode('visual')}>VISUAL</button>
+  const showMessage = (text, type) => { // פונקציה שמציגה הודעה למשתמש. היא מקבלת את הטקסט של ההודעה (text) ואת סוג ההודעה (type), ומעדכנת את מצב ההודעה (message) ואת סוג ההודעה (messageType) בהתאם לערכים שנשלחו. זה מאפשר לנו להציג הודעות שונות למשתמש, כמו הודעות הצלחה או שגיאה, בהתאם לסיטואציה ולתוצאה של הפעולות שהוא מבצע באפליקציה.
+    setMessage(text);
+    setMessageType(type);
+  };
 
-      <div style={{ marginTop: '20px', border: '1px solid black', padding: '10px' }}>
-        <input type="number" placeholder="Altitude" onChange={(e) => setData({...data, altitude: e.target.value})} />
-        <input type="number" placeholder="HIS" onChange={(e) => setData({...data, his: e.target.value})} />
-        <input type="number" placeholder="ADI" onChange={(e) => setData({...data, adi: e.target.value})} />
-        <button onClick={sendData}>SEND</button>
-      </div>
+  const validateData = () => { // פונקציה שמוודאת שהנתונים שהמשתמש הזין תקינים. היא מנסה להמיר את הערכים של altitude, his ו-adi למספרים עשרוניים, ואז בודקת אם הם נמצאים בטווחים הגיוניים עבור טיסה. אם אחד מהערכים לא תקין (למשל, אם הוא לא מספר או אם הוא מחוץ לטווח), הפונקציה מציגה הודעת שגיאה מתאימה ומחזירה false. אם כל הערכים תקינים, היא מחזירה true, מה שמאפשר להמשיך בתהליך שליחת הנתונים לשרת.
+    const { altitude, his, adi } = data;
+    const alt = parseFloat(altitude);
+    const h = parseFloat(his);
+    const a = parseFloat(adi);
 
-      {viewMode === 'text' ? (
+    if (isNaN(alt) || isNaN(h) || isNaN(a)) { // בודק אם אחד מהערכים לא ניתן להמרה למספר (NaN). אם כן, זה אומר שהמשתמש לא הזין ערך חוקי בשדה כלשהו, ולכן הפונקציה מציגה הודעת שגיאה שמבקשת מהמשתמש למלא את כל השדות כראוי ומחזירה false כדי למנוע המשך התהליך.
+      showMessage('Please fill all fields', 'error');
+      return false;
+    }
+    if (alt < 0 || alt > 3000) { // בודק אם הערך של הגובה (alt) הוא מחוץ לטווח של 0 עד 3000. אם כן, זה אומר שהמשתמש הזין ערך לא חוקי עבור הגובה, ולכן הפונקציה מציגה הודעת שגיאה שמציינת שהגובה חייב להיות בין 0 ל-3000 ומחזירה false כדי למנוע המשך התהליך.
+      showMessage('Altitude must be between 0 and 3000', 'error');
+      return false;
+    }
+    if (h < 0 || h > 360) { // בודק אם הערך של כיוון הטיסה (his) הוא מחוץ לטווח של 0 עד 360. אם כן, זה אומר שהמשתמש הזין ערך לא חוקי עבור כיוון הטיסה, ולכן הפונקציה מציגה הודעת שגיאה שמציינת שכיוון הטיסה חייב להיות בין 0 ל-360 ומחזירה false כדי למנוע המשך התהליך.
+      showMessage('HIS must be between 0 and 360', 'error');
+      return false;
+    }
+    if (a < -100 || a > 100) { // בודק אם הערך של זווית הטיסה (adi) הוא מחוץ לטווח של -100 עד 100. אם כן, זה אומר שהמשתמש הזין ערך לא חוקי עבור זווית הטיסה, ולכן הפונקציה מציגה הודעת שגיאה שמציינת ש-ADI חייב להיות בין -100 ל-100 ומחזירה false כדי למנוע המשך התהליך.
+      showMessage('ADI must be between -100 and 100', 'error');
+      return false;
+    }
+    return true;
+  };
+
+  const sendData = async () => { // פונקציה אסינכרונית שמטפלת בשליחת הנתונים שהמשתמש הזין לשרת. היא קודם כל בודקת אם הנתונים תקינים באמצעות הפונקציה validateData, ואם לא הם תקינים היא מחזירה מיד כדי למנוע המשך התהליך. אם הנתונים תקינים, היא מעדכנת את מצב הטעינה (loading) ל-true ומנקה את ההודעה הקודמת. לאחר מכן, היא מנסה לשלוח בקשת POST לכתובת 'http://localhost:5000/api/flightData' עם הנתונים בפורמט JSON. אם הבקשה מצליחה, היא מציגה הודעת הצלחה ומנקה את השדות. אם הבקשה נכשלת או שיש שגיאה בשרת, היא מציגה הודעת שגיאה מתאימה. בסופו של דבר, היא מעדכנת את מצב הטעינה ל-false כדי לאפשר למשתמש לבצע פעולות נוספות.
+    if (!validateData()) return;
+
+    setLoading(true);
+    showMessage('', '');
+
+    try { // מנסה לבצע את הקוד שבתוך הבלוק הזה, ואם יש שגיאה כלשהי במהלך הביצוע, הוא יתפוס את השגיאה ויטפל בה בבלוק ה-catch שמתחתיו. זה מאפשר לנו לנהל שגיאות בצורה מסודרת ולמנוע קריסות של האפליקציה כאשר משהו משתבש במהלך הביצוע של הקוד.
+      const response = await fetch('http://localhost:5000/api/flightData', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          altitude: altitudeNumber,
+          his: hisNumber,
+          adi: adiNumber
+        })
+      });
+
+      if (response.ok) { // בודק אם הבקשה מצליחה (response.ok === true). אם כן, זה אומר שהנתונים נשלחו בהצלחה לשרת, ולכן הפונקציה מציגה הודעת הצלחה ומנקה את השדות.
+        showMessage('Data sent successfully', 'success');
+        setData({ altitude: '', his: '', adi: '' });
+      } else {
+        showMessage('Failed to send data', 'error');
+      }
+    } catch (error) {
+      showMessage('Server error: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return ( // מחזיר את ה-JSX שמייצג את מבנה הממשק של האפליקציה. ה-JSX כולל אלמנטים שונים כמו כותרות, שדות קלט, כפתורים, והצגת נתונים בצורה טקסטואלית או ויזואלית בהתאם למצב viewMode. הוא גם מציג הודעות למשתמש בהתאם לפעולות שהוא מבצע, ומאפשר לו להזין נתונים ולשלוח אותם לשרת.
+    <main className="app">
+      <section className="hero">
         <div>
-          <p>Altitude: {data.altitude}</p>
-          <p>HIS: {data.his}</p>
-          <p>ADI: {data.adi}</p>
+          <p className="eyebrow">Flight Monitor</p>
+          <h1>מוניטור מכווני טיסה</h1>
+          <p className="intro">
+            Simple dashboard for altitude, HIS heading and ADI attitude values.
+          </p>
         </div>
-      ) : (
-        <div>
-          {
+        <div className="status-pill">React + Node</div>
+      </section>
 
-          }
-          <h2>Visual Gauges Area</h2>
+// חלק זה מציג את החלק הראשי של האפליקציה, הכולל כותרת, תיאור קצר, וכפתור שמאפשר למשתמש לבחור בין תצוגה טקסטואלית לויזואלית של הנתונים. הוא גם מציג הודעות למשתמש בהתאם לפעולות שהוא מבצע, ומאפשר לו להזין נתונים ולשלוח אותם לשרת.
+      <section className="panel"> 
+        <div className="panel-header">
+          <h2>Enter Flight Data</h2>
+          <div className="mode-buttons">
+            <button
+              className={viewMode === 'text' ? 'active' : ''}
+              onClick={() => setViewMode('text')}
+            >
+              Text
+            </button>
+            <button
+              className={viewMode === 'visual' ? 'active' : ''}
+              onClick={() => setViewMode('visual')}
+            >
+              Visual
+            </button>
+          </div>
         </div>
+
+// חלק זה מציג את שדות הקלט שבהם המשתמש יכול להזין את הנתונים של הגובה (altitude), כיוון הטיסה (HIS), וזווית הטיסה (ADI). הוא גם כולל כפתור לשליחת הנתונים לשרת, והכפתורים האלה יהיו מושבתים כאשר האפליקציה נמצאת במצב טעינה (loading) כדי למנוע פעולות נוספות בזמן שהנתונים נשלחים.
+        <div className="input-section">
+          <label>
+            Altitude
+            <input
+              type="number"
+              placeholder="0 - 3000 ft"
+              value={data.altitude}
+              onChange={(e) => handleInputChange('altitude', e.target.value)}
+              disabled={loading}
+            />
+          </label>
+
+          <label>
+            HIS
+            <input
+              type="number"
+              placeholder="0 - 360 degrees"
+              value={data.his}
+              onChange={(e) => handleInputChange('his', e.target.value)}
+              disabled={loading}
+            />
+          </label>
+
+          <label>
+            ADI
+            <input
+              type="number"
+              placeholder="-100 - 100 degrees"
+              value={data.adi}
+              onChange={(e) => handleInputChange('adi', e.target.value)}
+              disabled={loading}
+            />
+          </label>
+
+// כפתור זה מאפשר למשתמש לשלוח את הנתונים שהזין לשרת. הוא יהיה מושבת (disabled) כאשר האפליקציה נמצאת במצב טעינה (loading) כדי למנוע מהמשתמש ללחוץ עליו שוב בזמן שהנתונים נשלחים. הטקסט של הכפתור ישתנה ל-"Sending..." כאשר האפליקציה נמצאת במצב טעינה, כדי לספק משוב ויזואלי למשתמש על כך שהפעולה מתבצעת.
+          <button className="send-button" onClick={sendData} disabled={loading}>
+            {loading ? 'Sending...' : 'Send Data'}
+          </button>
+        </div>
+
+        {message && <div className={`message ${messageType}`}>{message}</div>}
+      </section>
+
+      {viewMode === 'text' ? ( // אם מצב התצוגה (viewMode) הוא 'text', אז מציגים את הנתונים בצורה טקסטואלית פשוטה. זה כולל כותרת "Current Values" ורשת של נתונים שמציגה את הערכים של הגובה (altitude), כיוון הטיסה (HIS), וזווית הטיסה (ADI) עם תוויות מתאימות. אם אחד מהערכים לא זמין, הוא יוצג כ-" - " כדי להראות שהנתון לא הוזן או לא זמין.  אם מצב התצוגה הוא 'visual', אז מציגים את הנתונים בצורה ויזואלית עם מדדים גרפיים שמייצגים את הגובה, כיוון הטיסה, וזווית הטיסה בצורה אינטואיטיבית יותר.
+        <section className="panel data-display">
+          <h2>Current Values</h2>
+          <div className="data-grid">
+            <div className="data-item">
+              <span className="label">Altitude</span>
+              <span className="value">{data.altitude || '-'} ft</span>  
+            </div>
+            <div className="data-item">
+              <span className="label">HIS</span>
+              <span className="value">{data.his || '-'} deg</span>
+            </div>
+            <div className="data-item">
+              <span className="label">ADI</span>
+              <span className="value">{data.adi || '-'} deg</span>
+            </div>
+          </div>
+        </section>
+      ) : ( // אם מצב התצוגה (viewMode) הוא 'visual', אז מציגים את הנתונים בצורה ויזואלית עם מדדים גרפיים שמייצגים את הגובה, כיוון הטיסה, וזווית הטיסה בצורה אינטואיטיבית יותר. זה כולל מד גובה שממלא בהתאם לאחוז הגובה מתוך 3000, מצפן שמסתובב בהתאם לכיוון הטיסה (HIS), ומד ADI שמציג את זווית הטיסה בצורה גרפית עם תזוזה ונטייה בהתאם לערכים שהמשתמש הזין.
+        <section className="panel visual-area">
+          <h2>Visual Gauges</h2>
+          <div className="gauge-grid">
+            <div className="gauge-card">
+              <span className="gauge-title">Altitude</span>
+              <div className="altitude-gauge">
+                <div className="altitude-fill" style={{ height: `${altitudePercent}%` }} />
+              </div>
+              <strong>{data.altitude || '-'} ft</strong>
+            </div>
+
+// כרטיס זה מציג את כיוון הטיסה (HIS) בצורה של מצפן עם מחט שמסתובבת בהתאם לערך ה-HIS שהמשתמש הזין. המחט תסתובב בזווית שמתאימה לכיוון הטיסה, כך שאם המשתמש הזין 0, המחט תצביע צפונה, ואם הזין 90, המחט תצביע מזרח, וכן הלאה. בנוסף, מוצג הערך המספרי של HIS מתחת למצפן.
+            <div className="gauge-card">
+              <span className="gauge-title">HIS</span>
+              <div className="compass">
+                <span>N</span>
+                <div className="needle" style={{ transform: `rotate(${hisNumber}deg)` }} />
+              </div>
+              <strong>{data.his || '-'} deg</strong>
+            </div>
+
+// כרטיס זה מציג את זווית הטיסה (ADI) בצורה גרפית עם מד שמציג את הנייה של המטוס בהתאם לערך שהמשתמש הזין. הערך יוצג מתחת למד.
+            <div className="gauge-card">
+              <span className="gauge-title">ADI</span>
+              <div className="adi-gauge">
+                <div
+                  className="horizon"
+                  style={{
+                    transform: `translateY(${adiMove}px) rotate(${adiNumber / 8}deg)`
+                  }}
+                />
+                <div className="aircraft-line" />
+              </div>
+              <strong>{data.adi || '-'} deg</strong>
+            </div>
+          </div>
+        </section>
       )}
-    </div>
+    </main>
   );
 }
 
-export default App;
+export default App; // מייצא את הרכיב App כדי שניתן יהיה לייבא אותו ולהשתמש בו בקבצים אחרים של האפליקציה. זה מאפשר לנו להשתמש ברכיב App כנקודת הכניסה הראשית של האפליקציה שלנו, ולהציג אותו בתוך ה-root element של ה-HTML כדי להראות את הממשק למשתמש.
