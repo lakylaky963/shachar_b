@@ -1,105 +1,70 @@
 # מוניטור מכווני טיסה
 
-פרויקט Full Stack פשוט שמציג נתוני טיסה בדפדפן ושומר אותם בשרת.
+פרויקט פשוט ב-React ו-Node.js שמציג נתוני טיסה בדפדפן ושומר אותם בשרת.
 
-## מה הפרויקט עושה?
+## על מה זה
 
-המשתמש מכניס שלושה נתונים:
+האפליקציה מקבלת שלושה ערכי טיסה מהמשתמש:
 
-- `Altitude` - גובה, בין `0` ל-`3000`.
-- `HIS` - כיוון במעלות, בין `0` ל-`360`.
-- `ADI` - זווית/מצב המטוס, בין `-100` ל-`100`.
+- `Altitude` – גובה בין `0` ל-`3000`
+- `HIS` – כיוון במעלות בין `0` ל-`360`
+- `ADI` – זווית מצב בין `-100` ל-`100`
 
-React מציג את הנתונים במסך ושולח אותם לשרת.
-השרת בודק שהנתונים תקינים ושומר אותם ב-MongoDB.
+הנתונים מוצגים בממשק React ונשלחים לשרת Express. השרת בודק את התקינות ושומר את הנתונים ב-MongoDB.
 
-## התקנה ראשונה
+## למה זה שימושי
 
-אם זו פעם ראשונה שמריצים את הפרויקט:
+זו תשתית פשוטה שמראה איך לחבר:
+
+- ממשק משתמש ב-React
+- שרת API ב-Express
+- בסיס נתונים MongoDB
+
+## איך מריצים
+
+במסוף הראשי של הפרויקט:
 
 ```powershell
 npm run install-all
-```
-
-## איך מריצים?
-
-בתוך התיקייה-server יש קובץ `env.example.txt` מומלץ להפוך אותו ל-`.env` ובתוכו יש את הפורטים והקישור לDB
-
-מתוך התיקייה הראשית של הפרויקט:
-
-```powershell
 npm run dev
 ```
 
-זה מריץ ביחד:
+זה מפעיל שני דברים יחד:
 
-- צד לקוח: `http://localhost:3000`
-- צד שרת: `http://localhost:5000`
+- לקוח: `http://localhost:3000`
+- שרת: `http://localhost:5000`
 
-צריך להשאיר את ה-terminal פתוח בזמן שמשתמשים באפליקציה.
+אם רוצים להריץ כל צד לבד:
 
-## מבנה הפרויקט
-
-```text
-shachar_b
-+-- package.json
-+-- package-lock.json
-+-- README.md
-+-- flight-monitor-client
-|   +-- package.json
-|   +-- package-lock.json
-|   +-- public
-|   |   +-- index.html
-|   +-- src
-|       +-- index.js
-|       +-- index.css
-|       +-- App.js
-|       +-- App.css
-+-- server
-    +-- package.json
-    +-- package-lock.json
-    +-- server.js
-    +-- config
-    |   +-- db.js
-    +-- models
-    |   +-- FlightData.js
-    +-- routes
-    |   +-- flightRoutes.js
-    +-- controllers
-        +-- flightController.js
+```powershell
+npm --prefix server start
+npm --prefix flight-monitor-client start
 ```
 
-## קבצים חשובים
+## קבצים עיקריים
 
 ### `flight-monitor-client/src/App.js`
 
-הקובץ הראשי של React.
+כאן קורה כל מה שקשור ללקוח:
 
-הוא אחראי על:
-
-- שמירת הנתונים שהמשתמש מקליד.
-- בדיקה שהערכים בטווח הנכון.
-- שליחת הנתונים לשרת.
-- הצגת הנתונים כטקסט או בצורה ויזואלית.
-
-### `flight-monitor-client/src/App.css`
-
-קובץ העיצוב של המסך.
+- שמירת קלט המשתמש
+- בדיקת טווחים
+- קריאה ל-API
+- הצגה של ערכי הטיסה
 
 ### `server/server.js`
 
-הקובץ שמפעיל את השרת.
+פותח את השרת ומחבר:
 
-הוא אחראי על:
-
-- יצירת שרת Express.
-- חיבור ל-MongoDB.
-- הפעלת ה-routes.
-- פתיחת השרת על פורט `5000`.
+- Express
+- CORS
+- JSON body parser
+- מסד נתונים
+- נתיבי API מהקובץ `flightRoutes.js`
 
 ### `server/routes/flightRoutes.js`
 
-מגדיר את כתובות ה-API:
+מגדיר את נקודות הקצה:
 
 ```js
 router.post('/api/flightData', createFlightData);
@@ -108,43 +73,50 @@ router.get('/api/flightData', getLatestFlightData);
 
 ### `server/controllers/flightController.js`
 
-מכיל את הפעולות שהשרת עושה:
+מטפל בבקשות:
 
-- שמירת נתון חדש.
-- החזרת הנתון האחרון.
-- בדיקה שהנתונים תקינים.
+- `POST` ליצירת נתון חדש
+- `GET` לקבלת הנתון האחרון
 
 ### `server/models/FlightData.js`
 
-מגדיר איך הנתון נשמר ב-MongoDB:
+מגדיר את מסמך הטיסה ב-MongoDB עם השדות:
 
-```js
-altitude: Number
-his: Number
-adi: Number
-```
+- `altitude`
+- `his`
+- `adi`
 
-## API
+## קובץ סביבה
 
-### בדיקה שהשרת עובד
+בתיקיית `server` יש `env.example.txt`.
+
+מה לעשות:
+
+1. לשכפל את הקובץ ל-`.env`
+2. להוסיף את כתובת ה-MongoDB
+3. לוודא שהפורט הוא `5000`
+
+## בדיקות מהירות
+
+### בדקו אם השרת עובד
 
 ```http
 GET http://localhost:5000
 ```
 
-מחזיר:
+### קבלת הנתון האחרון
 
-```text
-Node.js server is working
+```http
+GET http://localhost:5000/api/flightData
 ```
 
-### שליחת נתונים לשרת
+### שליחת נתון חדש
 
 ```http
 POST http://localhost:5000/api/flightData
 ```
 
-דוגמה:
+דוגמה ל-json:
 
 ```json
 {
@@ -154,69 +126,16 @@ POST http://localhost:5000/api/flightData
 }
 ```
 
-### קבלת הנתון האחרון
+## בעיות נפוצות
 
-```http
-GET http://localhost:5000/api/flightData
-```
+- אם הלקוח מקבל `404` על `/api/flightData`, תוודא שהשרת רץ על `5000`
+- אם השרת לא עולה, תבדוק את קובץ `server/.env`
+- אם MongoDB לא מתחבר, תוודא שהוא רץ ושה-URI תקין
 
-## תקלות נפוצות
+## למה זה חשוב
 
-### ERR_CONNECTION_REFUSED
+הפרויקט הזה נותן בסיס טוב לפרויקט Full Stack שבו:
 
-המשמעות היא שה-frontend עובד, אבל השרת לא רץ.
-
-פתרון:
-
-```powershell
-npm run dev
-```
-
-### MongoDB לא מתחבר
-
-צריך לוודא ש-MongoDB רץ במחשב.
-
-ברירת המחדל היא:
-
-```text
-mongodb://localhost:27017/flightMonitor
-```
-
-אפשר לשים קובץ `.env` בתוך תיקיית `server`:
-
-```env
-MONGO_URI=mongodb://localhost:27017/flightMonitor
-PORT=5000
-```
-
-## הסבר קצר בעל פה
-
-אפשר להסביר את הפרויקט כך:
-
-> בניתי אפליקציה פשוטה של React ו-Node.js. המשתמש מכניס נתוני טיסה בטופס. React שומר את הערכים עם `useState`, בודק שהם תקינים, ואז שולח אותם לשרת עם `fetch`. השרת מקבל את הנתונים דרך Express, בודק אותם שוב, ושומר אותם ב-MongoDB בעזרת Mongoose.
-
-## פקודות
-
-```powershell
-npm run dev
-```
-
-מריץ את כל הפרויקט.
-
-```powershell
-npm run client
-```
-
-מריץ רק את React.
-
-```powershell
-npm run server
-```
-
-מריץ רק את השרת.
-
-```powershell
-npm --prefix flight-monitor-client run build
-```
-
-בודק שה-frontend נבנה בלי שגיאות.
+- הפרונטאנד שולח נתונים לשרת
+- השרת מאמת ושומר אותם
+- אפשר להרחיב בקלות פונקציות נוספות בעתיד
