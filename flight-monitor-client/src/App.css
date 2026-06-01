@@ -367,7 +367,7 @@ input:disabled {
   border-radius: 999px;
   box-shadow: 0 0 0 2px #172033;
 }
-
+/* 
 @media (max-width: 780px) {
   .hero,
   .panel-header {
@@ -396,4 +396,4 @@ input:disabled {
   .modal {
     padding: 18px;
   }
-}
+} */
