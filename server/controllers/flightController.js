@@ -1,43 +1,47 @@
-const FlightData = require('../models/FlightData'); // מייבא את המודל FlightData מתוך קובץ ה-Model של הטיסות, שמכיל את ההגדרה של מבנה הנתונים לטיסה בבסיס הנתונים MongoDB. המודל משמש כנקודת גישה לנתוני הטיסה בבסיס הנתונים, ומאפשר לנו ליצור, לקרוא, לעדכן או למחוק נתוני טיסה בצורה נוחה ופשוטה יותר.
+const FlightData = require('../models/FlightData');
 
-// פונקציה שמוודאת שהנתונים שנשלחים לשרת הם בטווחים הגיוניים עבור טיסה. היא בודקת אם הגובה (altitude) הוא בין 0 ל-3000, כיוון הטיסה (his) הוא בין 0 ל-360, וזווית הטיסה (adi) היא בין -100 ל-100. אם אחד מהערכים מחוץ לטווח, הפונקציה מחזירה false, אחרת היא מחזירה true.
-const validateFlightData = (altitude, his, adi) => { 
-  if (
-    altitude < 0 || altitude > 3000 ||
-    his < 0 || his > 360 ||
-    adi < -100 || adi > 100
-  ) {
-    return false;
-  }
-  return true;
+const ALTITUDE_LIMIT = 3000;
+const HIS_LIMIT = 360;
+const ADI_LIMIT = 100;
+
+// בודק אם הערכים נמצאים בטווחים המותרים.
+const validateFlightData = (altitude, his, adi) => {
+  return (
+    typeof altitude === 'number' &&
+    typeof his === 'number' &&
+    typeof adi === 'number' &&
+    altitude >= 0 && altitude <= ALTITUDE_LIMIT &&
+    his >= 0 && his <= HIS_LIMIT &&
+    adi >= -ADI_LIMIT && adi <= ADI_LIMIT
+  );
 };
 
-
-const createFlightData = async (req, res) => { // פונקציה אסינכרונית שמטפלת בבקשות POST ליצירת נתוני טיסה חדשים. היא מקבלת את הנתונים מהגוף של הבקשה (req.body), בודקת אם הם תקינים באמצעות הפונקציה validateFlightData, ואם הם תקינים היא יוצרת מסמך חדש בבסיס הנתונים עם הנתונים שנשלחו ושומרת אותו. אם הנתונים לא תקינים, היא מחזירה תגובה עם סטטוס 400 ועם הודעת שגיאה מתאימה. אם יש שגיאה במהלך שמירת הנתונים, היא מחזירה תגובה עם סטטוס 500 ועם הודעת שגיאה כללית.
+// POST /api/flightData
+const createFlightData = async (req, res) => {
   try {
-    const { altitude, his, adi } = req.body; // מפענח את הערכים altitude, his ו-adi מתוך גוף הבקשה (req.body), שמכיל את הנתונים שנשלחו מהפרונטאנד. הערכים האלה משמשים ליצירת מסמך חדש בבסיס הנתונים אם הם תקינים.
+    const { altitude, his, adi } = req.body;
 
-    if (!validateFlightData(altitude, his, adi)) { // בודק אם הנתונים שנשלחו תקינים באמצעות הפונקציה validateFlightData. אם הפונקציה מחזירה false, זה אומר שאחד מהערכים מחוץ לטווחים המוגדרים, ולכן הפונקציה createFlightData מחזירה תגובה עם סטטוס 400 ועם הודעת שגיאה שמציינת שהנתונים לא תקינים.
-      return res.status(400).json({ // מחזיר תגובה עם סטטוס 400 (Bad Request) ועם הודעת שגיאה שמציינת שהנתונים לא תקינים, אם אחד מהערכים שנשלחו מחוץ לטווחים המוגדרים.
-        error: "Invalid flight data values" 
-      });
+    if (!validateFlightData(altitude, his, adi)) {
+      return res.status(400).json({ error: 'Invalid flight data values' });
     }
 
-    const newData = new FlightData(req.body); // יוצר מופע חדש של המודל FlightData עם הנתונים שנשלחו בגוף הבקשה (req.body). המופע הזה מייצג מסמך חדש שברצוננו לשמור בבסיס הנתונים MongoDB. אם הנתונים תקינים, נמשיך לשמור את המסמך הזה בבסיס הנתונים.
-    await newData.save(); // שומר את המסמך החדש שנוצר בבסיס הנתונים MongoDB. אם השמירה מצליחה, נמשיך לשלוח תגובה עם סטטוס 201 ועם הודעה שמאשרת שהנתונים נשמרו בהצלחה. אם יש שגיאה במהלך השמירה, היא תיתפס בבלוק catch והפונקציה תחזיר תגובה עם סטטוס 500 ועם הודעת שגיאה כללית.
-    res.status(201).json({ message: 'Data saved successfully', data: newData }); // מחזיר תגובה עם סטטוס 201 (Created) ועם הודעה שמאשרת שהנתונים נשמרו בהצלחה, יחד עם הנתונים שנשמרו (newData) כדי לאשר את הערכים שנשמרו בבסיס הנתונים.
-  } catch (error) { 
-    res.status(500).json({ error: 'Error saving data' }); // אם יש שגיאה במהלך ניסיון השמירה של הנתונים בבסיס הנתונים, היא תיתפס כאן והפונקציה תחזיר תגובה עם סטטוס 500 (Internal Server Error) ועם הודעת שגיאה כללית שמציינת שיש בעיה בשמירת הנתונים.
-  }
-};
+    const newData = new FlightData({ altitude, his, adi });
+    await newData.save();
 
-const getLatestFlightData = async (req, res) => { // פונקציה אסינכרונית שמטפלת בבקשות GET לקבלת הנתונים העדכניים ביותר של הטיסה. היא מנסה למצוא את המסמך האחרון שנשמר בבסיס הנתונים MongoDB על ידי מיון לפי _id בסדר יורד (sort({_id: -1})) והגבלת התוצאה ל-1 (limit(1)). אם נמצא מסמך, היא מחזירה אותו בתגובה בפורמט JSON. אם יש שגיאה במהלך החיפוש, היא מחזירה תגובה עם סטטוס 500 ועם הודעת שגיאה כללית.
-  try {
-    const data = await FlightData.find().sort({_id: -1}).limit(1); // מנסה למצוא את המסמך האחרון שנשמר בבסיס הנתונים MongoDB על ידי ביצוע שאילתה עם המודל FlightData. השאילתה מחזירה את כל המסמכים (find()), אבל היא ממיינת אותם לפי _id בסדר יורד (sort({_id: -1})) כדי לקבל את המסמך האחרון שנוסף, ומגבילה את התוצאה ל-1 (limit(1)) כדי לקבל רק את המסמך האחרון. אם נמצא מסמך, הוא יוחזר בתגובה בפורמט JSON. אם יש שגיאה במהלך החיפוש, היא תיתפס בבלוק catch והפונקציה תחזיר תגובה עם סטטוס 500 ועם הודעת שגיאה כללית.
-    res.json(data[0]); // מחזיר את המסמך הראשון (והיחיד) שנמצא בתוצאה של השאילתה, שהוא המסמך האחרון שנשמר בבסיס הנתונים. התגובה נשלחת בפורמט JSON, כך שהפרונטאנד יכול לקבל את הנתונים בצורה נוחה ולעבד אותם בהתאם לצורך.
+    res.status(201).json({ message: 'Data saved successfully', data: newData });
   } catch (error) {
-    res.status(500).json({ error: 'Error retrieving data' }); // אם יש שגיאה במהלך ניסיון החיפוש של הנתונים בבסיס הנתונים, היא תיתפס כאן והפונקציה תחזיר תגובה עם סטטוס 500 (Internal Server Error) ועם הודעת שגיאה כללית שמציינת שיש בעיה בקבלת הנתונים.
+    res.status(500).json({ error: 'Error saving data' });
   }
 };
 
-module.exports = { createFlightData, getLatestFlightData }; // מייצא את הפונקציות createFlightData ו-getLatestFlightData, כך שניתן יהיה לייבא אותן ולהשתמש בהן בקובץ הנתיבים (flightRoutes.js) כדי לטפל בבקשות הקשורות לטיסות. זה מאפשר לארגן את הקוד בצורה מודולרית ונקייה יותר, כאשר כל הפונקציות והלוגיקה הקשורות לטיסות נמצאות בקובץ נפרד שנקרא Controller.
+// GET /api/flightData
+const getLatestFlightData = async (_req, res) => {
+  try {
+    const data = await FlightData.find().sort({ _id: -1 }).limit(1);
+    res.json(data[0] || {});
+  } catch (error) {
+    res.status(500).json({ error: 'Error retrieving data' });
+  }
+};
+
+module.exports = { createFlightData, getLatestFlightData };

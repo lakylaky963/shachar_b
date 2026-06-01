@@ -1,26 +1,29 @@
-const express = require('express'); //  מייבא את ספריית Express, המשמשת כבסיס לבניית השרת, ניהול נתיבים (Routes) ופונקציות ביניים (Middleware).
-const cors = require('cors');  //מייבא את ספריית CORS, שמאפשרת לשרת לקבל בקשות מדפדפנים וכתובות חיצוניות (למשל, מאפליקציית הפרונטאנד).
-const connectDB = require('./config/db'); // מייבא את הפונקציה שאחראית על חיבור השרת לבסיס הנתונים (מתוך קובץ הגדרות פנימי).
-const flightRoutes = require('./routes/flightRoutes'); //מייבא את קובץ הנתונים והנתיבים שקשורים לטיסות (כמו הצגת טיסות, הוספה או מחיקה).
+require('dotenv').config();
 
-require('dotenv').config(); // טוען את משתני הסביבה מקובץ .env, שמאפשר להגדיר פרמטרים כמו כתובת בסיס הנתונים או פורט השרת בצורה נוחה ובטוחה.
+const express = require('express');
+const cors = require('cors');
+const connectDB = require('./config/db');
+const flightRoutes = require('./routes/flightRoutes');
 
-const app = express();// יוצר מופע של אפליקציית Express, שמייצג את השרת שלנו ודרכו נגדיר את הנתיבים והפונקציות השונות.
-app.use(cors());// מוסיף את פונקציית ה-CORS כאמצעי ביניים (Middleware) לכל הבקשות שמגיעות לשרת, מה שמאפשר גישה חופשית מהדפדפן או מכתובות חיצוניות.
-app.use(express.json());// מוסיף את פונקציית ה-JSON של Express כאמצעי ביניים, שמאפשר לשרת לפרש את גוף הבקשות בפורמט JSON, מה שחשוב במיוחד כשמדובר בנתונים שנשלחים מהפרונטאנד (כמו נתוני טיסה).
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-const PORT = process.env.PORT || 5000;// מגדיר את הפורט שעליו השרת יאזין. אם יש משתנה סביבה בשם PORT, הוא ישמש, אחרת השרת יאזין על פורט 5000 כברירת מחדל.
+app.use(cors()); // מאפשר לבקשת הדפדפן להגיע לשרת בלי בעיית CORS
+app.use(express.json()); // קורא את גוף הבקשות כ-JSON
+app.use('/', flightRoutes); // כל הנתיבים של טיסות מוגדרים ב-flightRoutes
+app.get('/', (_req, res) => res.send('Node.js server is working'));
 
-connectDB().then(() => {// מנסה להתחבר לבסיס הנתונים באמצעות הפונקציה connectDB. אם החיבור מצליח, השרת יתחיל להאזין לבקשות. אם יש שגיאה בחיבור, היא תתפס ותודפס בקונסול.
-  app.listen(PORT, () => {// השרת מתחיל להאזין לבקשות על הפורט שהוגדר, ומדפיס הודעה לקונסול שמאשרת שהשרת פועל וניתן לגשת אליו דרך הכתובת http://localhost:PORT.
-    console.log(`Server is running on http://localhost:${PORT}`);// הודעה שמודפסת לקונסול כאשר השרת מתחיל לפעול, מציינת את הכתובת והפורט שעליהם השרת מאזין.
-  });
-}).catch((err) => {// אם יש שגיאה במהלך ניסיון החיבור לבסיס הנתונים, היא תיתפס כאן ותודפס הודעת שגיאה לקונסול.
-  console.error("Failed to start server:", err); // הודעת שגיאה שמודפסת לקונסול אם השרת לא מצליח להתחבר לבסיס הנתונים, מציינת את הסיבה לכישלון.
-});
+async function startServer() {
+  // קודם מחברים למסד, אחר כך מאזינים לפורט
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
 
-app.use('/', flightRoutes); // מגדיר את הנתיב הראשי ('/') שבו השרת יטפל בבקשות הקשורות לטיסות, ומפנה אותן לנתיבים שהוגדרו בקובץ flightRoutes.js. זה מאפשר לארגן את הקוד בצורה מודולרית ונקייה יותר, כאשר כל הפונקציות והנתיבים הקשורים לטיסות נמצאים בקובץ נפרד.
-
-app.get("/", (req, res) => { // מגדיר נתיב GET לכתובת השורש ('/'), כך שכאשר מישהו יגש לכתובת http://localhost:PORT/, השרת יענה עם הודעה פשוטה שמאשרת שהשרת פועל.
-  res.send("Node.js server is working"); // שולח תגובה עם הטקסט "Node.js server is working" לכל בקשה שמגיעה לכתובת השורש, מה שיכול לשמש לבדיקה בסיסית שהשרת פועל כראוי.
-});
+startServer();
